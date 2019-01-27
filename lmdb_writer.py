@@ -3,6 +3,7 @@
 import argparse
 import os
 from io_util import read_pcd
+from data_util import resample_pcd
 from tensorpack import DataFlow, dataflow
 
 
@@ -19,9 +20,15 @@ class pcd_df(DataFlow):
     def get_data(self):
         for model_id in model_list:
             complete = read_pcd(os.path.join(self.complete_dir, '%s.pcd' % model_id))
+            complete = resample_pcd(complete, 16384)/40 - 1
+            partial = read_pcd(os.path.join(self.partial_dir, '%s.pcd' % model_id))
+            partial = resample_pcd(partial, 2048)/40 - 1
+            yield model_id.replace('/', '_'), partial, complete
+            """
             for i in range(self.num_scans):
                 partial = read_pcd(os.path.join(self.partial_dir, model_id, '%d.pcd' % i))
                 yield model_id.replace('/', '_'), partial, complete
+            """
 
 
 if __name__ == '__main__':
@@ -38,4 +45,5 @@ if __name__ == '__main__':
     df = pcd_df(model_list, args.num_scans, args.partial_dir, args.complete_dir)
     if os.path.exists(args.output_path):
         os.system('rm %s' % args.output_path)
+    # import ipdb; ipdb.set_trace()
     dataflow.LMDBSerializer.save(df, args.output_path)

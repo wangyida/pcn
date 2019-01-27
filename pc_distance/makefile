@@ -1,7 +1,7 @@
-cuda_inc = /usr/local/cuda-8.0/include/
-cuda_lib = /usr/local/cuda-8.0/lib64/
+cuda_inc = /usr/local/cuda-9.0/include/
+cuda_lib = /usr/local/cuda-9.0/lib64/
 nsync = /usr/local/lib/python2.7/dist-packages/external/nsync/public
-nvcc = /usr/local/cuda-8.0/bin/nvcc
+nvcc = /usr/local/cuda-9.0/bin/nvcc
 tf_inc = /usr/local/lib/python2.7/dist-packages/tensorflow/include
 tf_lib = /usr/local/lib/python2.7/dist-packages/tensorflow
 

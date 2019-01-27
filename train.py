@@ -3,6 +3,8 @@
 import argparse
 import datetime
 import importlib
+import matplotlib
+matplotlib.use('Agg')
 import models
 import os
 import tensorflow as tf
@@ -138,8 +140,8 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lmdb_train', default='data/shapenet/train.lmdb')
-    parser.add_argument('--lmdb_valid', default='data/shapenet/valid.lmdb')
+    parser.add_argument('--lmdb_train', default='/media/wangyida/D0-P1/database/pcn/suncg/train.lmdb')
+    parser.add_argument('--lmdb_valid', default='/media/wangyida/D0-P1/database/pcn/suncg/valid.lmdb')
     parser.add_argument('--log_dir', default='log/pcn_cd')
     parser.add_argument('--model_type', default='pcn_cd')
     parser.add_argument('--restore', action='store_true')
