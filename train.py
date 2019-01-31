@@ -21,14 +21,14 @@ class TrainProvider:
                                                  args.num_input_points, args.num_gt_points, is_training=True)
         batch_train = get_queued_data(df_train.get_data(), [tf.string, tf.float32, tf.float32],
                                       [[args.batch_size],
-                                       [args.batch_size, args.num_input_points, 3],
-                                       [args.batch_size, args.num_gt_points, 3]])
+                                       [args.batch_size, args.num_input_points, 6],
+                                       [args.batch_size, args.num_gt_points, 6]])
         df_valid, self.num_valid = lmdb_dataflow(args.lmdb_valid, args.batch_size,
                                                  args.num_input_points, args.num_gt_points, is_training=False)
         batch_valid = get_queued_data(df_valid.get_data(), [tf.string, tf.float32, tf.float32],
                                       [[args.batch_size],
-                                       [args.batch_size, args.num_input_points, 3],
-                                       [args.batch_size, args.num_gt_points, 3]])
+                                       [args.batch_size, args.num_input_points, 6],
+                                       [args.batch_size, args.num_gt_points, 6]])
         self.batch_data = tf.cond(is_training, lambda: batch_train, lambda: batch_valid)
 
 
@@ -140,13 +140,13 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lmdb_train', default='/media/wangyida/D0-P1/database/pcn/suncg/train.lmdb')
+    parser.add_argument('--lmdb_train', default='/media/wangyida/D0-P1/database/pcn/suncg/valid.lmdb')
     parser.add_argument('--lmdb_valid', default='/media/wangyida/D0-P1/database/pcn/suncg/valid.lmdb')
     parser.add_argument('--log_dir', default='log/pcn_cd')
     parser.add_argument('--model_type', default='pcn_cd')
     parser.add_argument('--restore', action='store_true')
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--num_input_points', type=int, default=2048)
+    parser.add_argument('--num_input_points', type=int, default=1024)
     parser.add_argument('--num_gt_points', type=int, default=16384)
     parser.add_argument('--base_lr', type=float, default=0.0001)
     parser.add_argument('--lr_decay', action='store_true')

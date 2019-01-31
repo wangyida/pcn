@@ -20,9 +20,9 @@ class pcd_df(DataFlow):
     def get_data(self):
         for model_id in model_list:
             complete = read_pcd(os.path.join(self.complete_dir, '%s.pcd' % model_id))
-            complete = resample_pcd(complete, 16384)/40 - 1
+            complete = resample_pcd(complete, 16384) / 80
             partial = read_pcd(os.path.join(self.partial_dir, '%s.pcd' % model_id))
-            partial = resample_pcd(partial, 2048)/40 - 1
+            partial /= 80
             yield model_id.replace('/', '_'), partial, complete
             """
             for i in range(self.num_scans):
