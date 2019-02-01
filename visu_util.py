@@ -1,5 +1,6 @@
 # Author: Wentao Yuan (wyuan1@cs.cmu.edu) 05/31/2018
 
+import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -13,10 +14,13 @@ def plot_pcd_three_views(filename, pcds, titles, suptitle='', sizes=None, cmap='
         elev = 30
         azim = -45 + 90 * i
         for j, (pcd, size) in enumerate(zip(pcds, sizes)):
-            color = pcd[:, 3]*80
+            if j == 0 or j == 3:
+                color = pcd[:, 3]*80
+            else:
+                color = np.argmax(pcd[:, 3:], -1)
             ax = fig.add_subplot(3, len(pcds), i * len(pcds) + j + 1, projection='3d')
             ax.view_init(elev, azim)
-            ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=color, s=size, cmap=cmap, vmin=-1, vmax=0.8)
+            ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=color, s=size, cmap=cmap, vmin=0, vmax=1)
             ax.set_title(titles[j])
             ax.set_axis_off()
             ax.set_xlim(xlim)

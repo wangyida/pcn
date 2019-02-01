@@ -140,7 +140,7 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lmdb_train', default='/media/wangyida/D0-P1/database/pcn/suncg/valid.lmdb')
+    parser.add_argument('--lmdb_train', default='/media/wangyida/D0-P1/database/pcn/suncg/train.lmdb')
     parser.add_argument('--lmdb_valid', default='/media/wangyida/D0-P1/database/pcn/suncg/valid.lmdb')
     parser.add_argument('--log_dir', default='log/pcn_cd')
     parser.add_argument('--model_type', default='pcn_cd')
