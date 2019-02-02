@@ -56,7 +56,7 @@ class Model:
         for i in range(np.shape(gt)[0]):
             index = tf.expand_dims(retb[i], -1)
             sem_feat = tf.nn.softmax(coarse[i,:,3:], -1)
-            sem_gt = tf.cast(tf.one_hot(tf.gather_nd(tf.cast(gt[i,:,3]*80*12, tf.int32), index), 12), tf.float32)
+            sem_gt = tf.cast(tf.one_hot(tf.gather_nd(tf.cast(gt[i,:,3]*80*12 - 1, tf.int32), index), 12), tf.float32)
             loss_sem_coarse = tf.reduce_mean(-tf.reduce_sum(
                         0.6 * sem_gt * tf.log(1e-6 + sem_feat) + (1 - 0.6) *
                         (1 - sem_gt) * tf.log(1e-6 + 1 - sem_feat), [1]))
@@ -69,7 +69,7 @@ class Model:
         for i in range(np.shape(gt)[0]):
             index = tf.expand_dims(retb[i], -1)
             sem_feat = tf.nn.softmax(fine[i,:,3:], -1)
-            sem_gt = tf.cast(tf.one_hot(tf.gather_nd(tf.cast(gt[i,:,3]*80*12, tf.int32), index), 12), tf.float32)
+            sem_gt = tf.cast(tf.one_hot(tf.gather_nd(tf.cast(gt[i,:,3]*80*12 - 1, tf.int32), index), 12), tf.float32)
             loss_sem_fine = tf.reduce_mean(-tf.reduce_sum(
                         0.6 * sem_gt * tf.log(1e-6 + sem_feat) + (1 - 0.6) *
                         (1 - sem_gt) * tf.log(1e-6 + 1 - sem_feat), [1]))
