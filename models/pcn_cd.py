@@ -1,9 +1,9 @@
 # Author: Wentao Yuan (wyuan1@cs.cmu.edu) 05/31/2018
 
+import numpy as np
 import tensorflow as tf
 from tf_util import mlp, mlp_conv, chamfer, add_train_summary, add_valid_summary
 from pc_distance import tf_nndistance
-
 
 class Model:
     def __init__(self, inputs, gt, alpha):
@@ -29,8 +29,8 @@ class Model:
 
     def create_decoder(self, features):
         with tf.variable_scope('decoder', reuse=tf.AUTO_REUSE):
-            coarse = mlp(features, [1024, 1024, self.num_coarse * 6])
-            coarse = tf.reshape(coarse, [-1, self.num_coarse, 6])
+            coarse = mlp(features, [1024, 1024, self.num_coarse * (3 + 12)])
+            coarse = tf.reshape(coarse, [-1, self.num_coarse, 3 + 12])
 
         with tf.variable_scope('folding', reuse=tf.AUTO_REUSE):
             grid = tf.meshgrid(tf.linspace(-0.05, 0.05, self.grid_size), tf.linspace(-0.05, 0.05, self.grid_size))
@@ -38,24 +38,24 @@ class Model:
             grid_feat = tf.tile(grid, [features.shape[0], self.num_coarse, 1])
 
             point_feat = tf.tile(tf.expand_dims(coarse, 2), [1, 1, self.grid_size ** 2, 1])
-            point_feat = tf.reshape(point_feat, [-1, self.num_fine, 6])
+            point_feat = tf.reshape(point_feat, [-1, self.num_fine, 3 + 12])
 
             global_feat = tf.tile(tf.expand_dims(features, 1), [1, self.num_fine, 1])
 
             feat = tf.concat([grid_feat, point_feat, global_feat], axis=2)
 
             center = tf.tile(tf.expand_dims(coarse, 2), [1, 1, self.grid_size ** 2, 1])
-            center = tf.reshape(center, [-1, self.num_fine, 6])
+            center = tf.reshape(center, [-1, self.num_fine, 3 + 12])
 
-            fine = mlp(feat, [512, 512, 6]) + center
+            fine = mlp(feat, [512, 512, 3 + 12]) + center
         return coarse, fine
 
     def create_loss(self, coarse, fine, gt, alpha):
         loss_coarse = chamfer(coarse[:,:,0:3], gt[:,:,0:3])
         _, retb, _, retd = tf_nndistance.nn_distance(coarse[:,:,0:3], gt[:,:,0:3])
-        for i in range(32):
+        for i in range(np.shape(gt)[0]):
             index = tf.expand_dims(retb[i], -1)
-            sem_feat = tf.cast(tf.one_hot(tf.cast(coarse[i,:,3]*80*12, tf.int32), 12), tf.float32)
+            sem_feat = tf.nn.softmax(coarse[i,:,3:], -1)
             sem_gt = tf.cast(tf.one_hot(tf.gather_nd(tf.cast(gt[i,:,3]*80*12, tf.int32), index), 12), tf.float32)
             loss_sem_coarse = tf.reduce_mean(-tf.reduce_sum(
                         0.6 * sem_gt * tf.log(1e-6 + sem_feat) + (1 - 0.6) *
@@ -66,9 +66,9 @@ class Model:
 
         loss_fine = chamfer(fine[:,:,0:3], gt[:,:,0:3])
         _, retb, _, retd = tf_nndistance.nn_distance(fine[:,:,0:3], gt[:,:,0:3])
-        for i in range(32):
+        for i in range(np.shape(gt)[0]):
             index = tf.expand_dims(retb[i], -1)
-            sem_feat = tf.cast(tf.one_hot(tf.cast(fine[i,:,3]*80*12, tf.int32), 12), tf.float32)
+            sem_feat = tf.nn.softmax(fine[i,:,3:], -1)
             sem_gt = tf.cast(tf.one_hot(tf.gather_nd(tf.cast(gt[i,:,3]*80*12, tf.int32), index), 12), tf.float32)
             loss_sem_fine = tf.reduce_mean(-tf.reduce_sum(
                         0.6 * sem_gt * tf.log(1e-6 + sem_feat) + (1 - 0.6) *
