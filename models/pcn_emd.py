@@ -1,7 +1,9 @@
 # Author: Wentao Yuan (wyuan1@cs.cmu.edu) 05/31/2018
 
+import numpy as np
 import tensorflow as tf
 from tf_util import mlp, mlp_conv, chamfer, earth_mover, add_train_summary, add_valid_summary
+from pc_distance import tf_nndistance
 
 
 class Model:
@@ -19,18 +21,18 @@ class Model:
 
     def create_encoder(self, inputs):
         with tf.variable_scope('encoder_0', reuse=tf.AUTO_REUSE):
-            features = mlp_conv(inputs, [128, 256])
+            features = tf.squeeze(mlp_conv(tf.expand_dims(inputs, -2), [128, 256]))
             features_global = tf.reduce_max(features, axis=1, keep_dims=True, name='maxpool_0')
             features = tf.concat([features, tf.tile(features_global, [1, tf.shape(inputs)[1], 1])], axis=2)
         with tf.variable_scope('encoder_1', reuse=tf.AUTO_REUSE):
-            features = mlp_conv(features, [512, 1024])
+            features = tf.squeeze(mlp_conv(tf.expand_dims(features, -2), [512, 1024]))
             features = tf.reduce_max(features, axis=1, name='maxpool_1')
         return features
 
     def create_decoder(self, features):
         with tf.variable_scope('decoder', reuse=tf.AUTO_REUSE):
-            coarse = mlp(features, [1024, 1024, self.num_coarse * 3])
-            coarse = tf.reshape(coarse, [-1, self.num_coarse, 3])
+            coarse = mlp(features, [1024, 1024, self.num_coarse * (3 + 12)])
+            coarse = tf.reshape(coarse, [-1, self.num_coarse, 3 + 12])
 
         with tf.variable_scope('folding', reuse=tf.AUTO_REUSE):
             x = tf.linspace(-self.grid_scale, self.grid_scale, self.grid_size)
@@ -40,25 +42,43 @@ class Model:
             grid_feat = tf.tile(grid, [features.shape[0], self.num_coarse, 1])
 
             point_feat = tf.tile(tf.expand_dims(coarse, 2), [1, 1, self.grid_size ** 2, 1])
-            point_feat = tf.reshape(point_feat, [-1, self.num_fine, 3])
+            point_feat = tf.reshape(point_feat, [-1, self.num_fine, 3 + 12])
 
             global_feat = tf.tile(tf.expand_dims(features, 1), [1, self.num_fine, 1])
 
             feat = tf.concat([grid_feat, point_feat, global_feat], axis=2)
 
             center = tf.tile(tf.expand_dims(coarse, 2), [1, 1, self.grid_size ** 2, 1])
-            center = tf.reshape(center, [-1, self.num_fine, 3])
+            center = tf.reshape(center, [-1, self.num_fine, 3 + 12])
 
-            fine = mlp_conv(feat, [512, 512, 3]) + center
+            fine = tf.squeeze(mlp_conv(tf.expand_dims(feat, -2), [512, 512, 3 + 12])) + center
         return coarse, fine
 
     def create_loss(self, coarse, fine, gt, alpha):
         gt_ds = gt[:, :coarse.shape[1], :]
-        loss_coarse = earth_mover(coarse, gt_ds)
+        loss_coarse = earth_mover(coarse[:,:,0:3], gt_ds[:,:,0:3])
+        _, retb, _, retd = tf_nndistance.nn_distance(coarse[:,:,0:3], gt_ds[:,:,0:3])
+        for i in range(np.shape(gt_ds)[0]):
+            index = tf.expand_dims(retb[i], -1)
+            sem_feat = tf.nn.softmax(coarse[i,:,3:], -1)
+            sem_gt = tf.cast(tf.one_hot(tf.gather_nd(tf.cast(gt_ds[i,:,3]*80*12, tf.int32), index), 12), tf.float32)
+            loss_sem_coarse = tf.reduce_mean(-tf.reduce_sum(
+                        0.9 * sem_gt * tf.log(1e-6 + sem_feat) + (1 - 0.9) *
+                        (1 - sem_gt) * tf.log(1e-6 + 1 - sem_feat), [1]))
+            loss_coarse += loss_sem_coarse
         add_train_summary('train/coarse_loss', loss_coarse)
         update_coarse = add_valid_summary('valid/coarse_loss', loss_coarse)
 
-        loss_fine = chamfer(fine, gt)
+        loss_fine = chamfer(fine[:,:,0:3], gt[:,:,0:3])
+        _, retb, _, retd = tf_nndistance.nn_distance(fine[:,:,0:3], gt[:,:,0:3])
+        for i in range(np.shape(gt)[0]):
+            index = tf.expand_dims(retb[i], -1)
+            sem_feat = tf.nn.softmax(fine[i,:,3:], -1)
+            sem_gt = tf.cast(tf.one_hot(tf.gather_nd(tf.cast(gt[i,:,3]*80*12, tf.int32), index), 12), tf.float32)
+            loss_sem_fine = tf.reduce_mean(-tf.reduce_sum(
+                        0.9 * sem_gt * tf.log(1e-6 + sem_feat) + (1 - 0.9) *
+                        (1 - sem_gt) * tf.log(1e-6 + 1 - sem_feat), [1]))
+            loss_fine += loss_sem_fine
         add_train_summary('train/fine_loss', loss_fine)
         update_fine = add_valid_summary('valid/fine_loss', loss_fine)
 
