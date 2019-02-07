@@ -17,7 +17,7 @@ def plot_pcd_three_views(filename, pcds, titles, suptitle='', sizes=None, cmap='
             if ij == 0 or ij == 3:
                 color = pcd[:, 3]*80
             else:
-                color = np.argmax(pcd[:, 3:], -1)
+                color = np.argmax(pcd[:, 3:], -1)/12
             ax = fig.add_subplot(3, len(pcds), i * len(pcds) + ij + 1, projection='3d')
             ax.view_init(elev, azim)
             ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], zdir=zdir, c=color, s=size, cmap=cmap, vmin=0, vmax=1)

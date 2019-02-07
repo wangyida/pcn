@@ -56,7 +56,7 @@ class Model:
 
     def create_loss(self, coarse, fine, gt, alpha):
         gt_ds = gt[:, :coarse.shape[1], :]
-        loss_coarse = earth_mover(coarse[:,:,0:3], gt_ds[:,:,0:3])
+        loss_coarse = 10 * earth_mover(coarse[:,:,0:3], gt_ds[:,:,0:3])
         _, retb, _, retd = tf_nndistance.nn_distance(coarse[:,:,0:3], gt_ds[:,:,0:3])
         for i in range(np.shape(gt_ds)[0]):
             index = tf.expand_dims(retb[i], -1)
@@ -69,7 +69,7 @@ class Model:
         add_train_summary('train/coarse_loss', loss_coarse)
         update_coarse = add_valid_summary('valid/coarse_loss', loss_coarse)
 
-        loss_fine = chamfer(fine[:,:,0:3], gt[:,:,0:3])
+        loss_fine = 10 * chamfer(fine[:,:,0:3], gt[:,:,0:3])
         _, retb, _, retd = tf_nndistance.nn_distance(fine[:,:,0:3], gt[:,:,0:3])
         for i in range(np.shape(gt)[0]):
             index = tf.expand_dims(retb[i], -1)

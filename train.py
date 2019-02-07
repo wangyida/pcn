@@ -140,8 +140,8 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lmdb_train', default='/media/wangyida/D0-P1/database/pcn/suncg/train.lmdb')
-    parser.add_argument('--lmdb_valid', default='/media/wangyida/D0-P1/database/pcn/suncg/valid.lmdb')
+    parser.add_argument('--lmdb_train', default='/media/wangyida/HDD/database/pcn/suncg/train.lmdb')
+    parser.add_argument('--lmdb_valid', default='/media/wangyida/HDD/database/pcn/suncg/valid.lmdb')
     parser.add_argument('--log_dir', default='log/pcn_cd')
     parser.add_argument('--model_type', default='pcn_cd')
     parser.add_argument('--restore', action='store_true')
@@ -156,8 +156,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_step', type=int, default=300000)
     parser.add_argument('--steps_per_print', type=int, default=100)
     parser.add_argument('--steps_per_eval', type=int, default=1000)
-    parser.add_argument('--steps_per_visu', type=int, default=3000)
-    parser.add_argument('--steps_per_save', type=int, default=100000)
+    parser.add_argument('--steps_per_visu', type=int, default=1000)
+    parser.add_argument('--steps_per_save', type=int, default=10000)
     args = parser.parse_args()
 
     train(args)
